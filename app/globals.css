@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+:root {
+  /* Theme variables matching requested palette & shadcn dashboard style */
+  --color-background: #f8fafc;
+  --color-foreground: #0f172a;
+  
+  --color-primary: #2563eb;
+  --color-primary-foreground: #ffffff;
+  
+  --color-secondary: #10b981;
+  --color-secondary-foreground: #ffffff;
+  
+  --color-accent: #06b6d4;
+  --color-accent-foreground: #ffffff;
+  
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #ffffff;
+  
+  --color-danger: #ef4444;
+  --color-danger-foreground: #ffffff;
+  
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f172a;
+  
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  
+  --color-ring: #2563eb;
+  
+  --radius-xl: 1rem;
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+
+  --font-sans: var(--font-geist-sans), Inter, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+.dark {
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+  
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #0f172a;
+  
+  --color-secondary: #34d399;
+  --color-secondary-foreground: #0f172a;
+  
+  --color-accent: #22d3ee;
+  --color-accent-foreground: #0f172a;
+  
+  --color-warning: #fbbf24;
+  --color-warning-foreground: #0f172a;
+  
+  --color-danger: #f87171;
+  --color-danger-foreground: #0f172a;
+  
+  --color-card: #1e293b;
+  --color-card-foreground: #f8fafc;
+  
+  --color-popover: #1e293b;
+  --color-popover-foreground: #f8fafc;
+  
+  --color-muted: #334155;
+  --color-muted-foreground: #94a3b8;
+  
+  --color-border: #334155;
+  --color-input: #334155;
+  
+  --color-ring: #3b82f6;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* Hide spin-buttons for input number */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
