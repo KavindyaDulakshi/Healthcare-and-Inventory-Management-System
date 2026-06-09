@@ -38,41 +38,44 @@ export function Dialog({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10">
-          {/* Overlay background */}
+          {/* Overlay background with blur */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.4 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(8px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             onClick={onClose}
-            className="fixed inset-0 bg-black cursor-pointer"
+            className="fixed inset-0 bg-black/45 dark:bg-black/65 cursor-pointer"
           />
 
           {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ type: "spring", duration: 0.4 }}
+            exit={{ opacity: 0, scale: 0.92, y: 20 }}
+            transition={{ type: "spring", stiffness: 260, damping: 24 }}
             className={cn(
-              "relative w-full max-w-lg rounded-2xl border border-border bg-card text-foreground p-6 shadow-xl z-10 flex flex-col gap-4 overflow-y-auto max-h-[90vh]",
+              "glass-panel relative w-full max-w-lg rounded-2xl bg-card/90 dark:bg-card/85 text-foreground p-6 shadow-2xl z-10 flex flex-col gap-4 overflow-y-auto max-h-[90vh] pt-7",
               className
             )}
           >
+            {/* Horizontal gradient stripe at the top */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500 rounded-t-2xl" />
+
             {/* Header */}
             <div className="flex items-start justify-between">
-              <div className="flex flex-col gap-1 pr-6">
+              <div className="flex flex-col gap-1 pr-8 text-left">
                 {title && (
-                  <h2 className="text-lg font-bold tracking-tight">{title}</h2>
+                  <h2 className="text-lg font-extrabold tracking-tight">{title}</h2>
                 )}
                 {description && (
-                  <p className="text-sm text-muted-foreground">{description}</p>
+                  <p className="text-xs text-muted-foreground leading-normal">{description}</p>
                 )}
               </div>
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200 cursor-pointer"
+                className="absolute top-4 right-4 rounded-xl p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 hover:rotate-90 border border-transparent hover:border-border/60 cursor-pointer"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4.5 w-4.5" />
               </button>
             </div>
 

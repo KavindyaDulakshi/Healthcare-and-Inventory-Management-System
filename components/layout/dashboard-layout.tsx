@@ -341,14 +341,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group relative",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 group relative select-none",
                     isActive
-                      ? "bg-primary text-white shadow-xs"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white shadow-md shadow-blue-500/15"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground hover:pl-4"
                   )}
                   title={isSidebarCollapsed ? item.name : undefined}
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
+                  <Icon className={cn("h-5 w-5 shrink-0 transition-transform duration-300", {
+                    "text-white": isActive,
+                    "text-muted-foreground group-hover:text-foreground": !isActive,
+                    "group-hover:rotate-12 group-hover:scale-110": item.name !== "Settings" && item.name !== "Audit Logs",
+                    "group-hover:rotate-90 group-hover:scale-110": item.name === "Settings",
+                    "group-hover:scale-115 group-hover:-rotate-12": item.name === "Audit Logs"
+                  })} />
                   {!isSidebarCollapsed && <span>{item.name}</span>}
                   
                   {/* Tooltip for collapsed mode */}
@@ -379,11 +385,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <>
               {/* Backdrop */}
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                animate={{ opacity: 1, backdropFilter: "blur(4px)" }}
+                exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="fixed inset-0 bg-black z-40 md:hidden cursor-pointer"
+                className="fixed inset-0 bg-black/45 dark:bg-black/65 z-40 md:hidden cursor-pointer"
               />
               
               {/* Drawer Container */}
@@ -392,18 +398,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", bounce: 0.1, duration: 0.4 }}
-                className="fixed top-0 bottom-0 left-0 w-72 bg-card z-50 p-6 flex flex-col gap-6 shadow-2xl md:hidden border-r border-border"
+                className="glass-panel fixed top-0 bottom-0 left-0 w-72 bg-card/90 dark:bg-card/85 z-50 p-6 flex flex-col gap-6 shadow-2xl md:hidden border-r border-border"
               >
                 <div className="flex items-center justify-between border-b border-border pb-4">
                   <div className="flex items-center gap-2">
-                    <HeartPulse className="h-6 w-6 text-primary" />
-                    <span className="font-bold text-lg">MediCare Menu</span>
+                    <HeartPulse className="h-6 w-6 text-primary animate-pulse" />
+                    <span className="font-bold text-lg tracking-tight">MediCare Menu</span>
                   </div>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-1 rounded-full text-muted-foreground hover:bg-muted cursor-pointer"
+                    className="p-2 rounded-xl text-muted-foreground hover:bg-muted/80 border border-transparent hover:border-border cursor-pointer transition-all hover:rotate-90 duration-300"
                   >
-                    <X className="h-5.5 w-5.5" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
                 
@@ -429,13 +435,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 group",
                           isActive
-                            ? "bg-primary text-white"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white shadow-md shadow-blue-500/15"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground hover:pl-4"
                         )}
                       >
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110" />
                         <span>{item.name}</span>
                       </Link>
                     );
