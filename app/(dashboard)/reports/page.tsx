@@ -7,7 +7,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer,
   AreaChart,
   Area,
   LineChart,
@@ -15,6 +14,7 @@ import {
   CartesianGrid,
   Legend
 } from "recharts";
+import { SafeResponsiveContainer } from "@/components/ui/chart-container";
 import {
   FileText,
   Printer,
@@ -176,9 +176,9 @@ export default function ReportsPage() {
               <CardDescription>Paid receipts vs Outstanding accounts receivables ($)</CardDescription>
             </CardHeader>
             <CardContent className="h-80 pt-4">
-              {mounted ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={financialData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <SafeResponsiveContainer>
+                {(width, height) => (
+                  <BarChart width={width} height={height} data={financialData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                     <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip
@@ -194,10 +194,8 @@ export default function ReportsPage() {
                     <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} name="Paid Revenue" />
                     <Bar dataKey="outstanding" fill="#F59E0B" radius={[4, 4, 0, 0]} name="Outstanding" />
                   </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">Loading curves...</div>
-              )}
+                )}
+              </SafeResponsiveContainer>
             </CardContent>
           </Card>
         )}
@@ -210,9 +208,9 @@ export default function ReportsPage() {
               <CardDescription>Roster appointments vs general checkup logs</CardDescription>
             </CardHeader>
             <CardContent className="h-80 pt-4">
-              {mounted ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={clinicActivityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <SafeResponsiveContainer>
+                {(width, height) => (
+                  <AreaChart width={width} height={height} data={clinicActivityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorApp" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#2563EB" stopOpacity={0.2}/>
@@ -238,10 +236,8 @@ export default function ReportsPage() {
                     <Area type="monotone" dataKey="appointments" stroke="#2563EB" strokeWidth={2.5} fillOpacity={1} fill="url(#colorApp)" name="Appointments" />
                     <Area type="monotone" dataKey="checkups" stroke="#06B6D4" strokeWidth={2.5} fillOpacity={1} fill="url(#colorCheck)" name="Dossier Audits" />
                   </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">Loading trends...</div>
-              )}
+                )}
+              </SafeResponsiveContainer>
             </CardContent>
           </Card>
         )}

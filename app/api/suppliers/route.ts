@@ -1,11 +1,28 @@
 import { NextResponse } from "next/server";
 import { dbService } from "@/lib/db";
 
+// Helper function to format database supplier record to frontend Supplier model
+function formatSupplier(sup: any) {
+  if (!sup) return null;
+  return {
+    id: String(sup.id),
+    name: sup.company_name || sup.name || "",
+    contactPerson: sup.contact_person || sup.contactPerson || "Representative",
+    email: sup.email || "",
+    phone: sup.phone || "",
+    address: sup.address || "",
+    rating: Number(sup.rating !== undefined ? sup.rating : 5),
+    balance: Number(sup.balance !== undefined ? sup.balance : 0),
+    purchaseHistoryCount: Number(sup.purchase_history_count !== undefined ? sup.purchase_history_count : sup.purchaseHistoryCount || 0)
+  };
+}
+
 // GET /api/suppliers
 export async function GET() {
   try {
     const suppliers = await dbService.getSuppliers();
-    return NextResponse.json(suppliers);
+    const formatted = suppliers.map(formatSupplier);
+    return NextResponse.json(formatted);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -29,7 +46,6 @@ export async function POST(request: Request) {
 
     const supplier = await dbService.createSupplier({
       company_name: companyName,
-      name: companyName, // compatibility for frontend key mapping
       email,
       phone,
       address
@@ -43,10 +59,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: "Supplier created successfully", supplier },
+      { message: "Supplier created successfully", supplier: formatSupplier(supplier) },
       { status: 201 }
     );
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

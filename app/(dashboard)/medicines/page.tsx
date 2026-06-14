@@ -28,8 +28,8 @@ export default function MedicinesDirectoryPage() {
   // Filter medicines
   const filteredMedicines = medicines.filter(med => {
     const matchesSearch = 
-      med.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      med.barcode.includes(searchQuery) ||
+      (med.name && med.name.toLowerCase().includes(searchQuery.toLowerCase())) || 
+      (med.barcode && med.barcode.includes(searchQuery)) ||
       (med.supplier && med.supplier.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesCategory = selectedCategory === "All" || med.category === selectedCategory;
@@ -129,7 +129,7 @@ export default function MedicinesDirectoryPage() {
                     }
                     className="capitalize text-[9px] font-bold shrink-0"
                   >
-                    {med.status.replace("-", " ")}
+                    {(med.status || "in-stock").replace("-", " ")}
                   </Badge>
                 </div>
               </CardHeader>

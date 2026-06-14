@@ -39,7 +39,7 @@
   --radius-md: 0.5rem;
   --radius-sm: 0.25rem;
 
-  --font-sans: var(--font-geist-sans), Inter, sans-serif;
+  --font-sans: var(--font-plus-jakarta-sans), Inter, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 }
 

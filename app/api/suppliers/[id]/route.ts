@@ -5,6 +5,22 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
+// Helper function to format database supplier record to frontend Supplier model
+function formatSupplier(sup: any) {
+  if (!sup) return null;
+  return {
+    id: String(sup.id),
+    name: sup.company_name || sup.name || "",
+    contactPerson: sup.contact_person || sup.contactPerson || "Representative",
+    email: sup.email || "",
+    phone: sup.phone || "",
+    address: sup.address || "",
+    rating: Number(sup.rating !== undefined ? sup.rating : 5),
+    balance: Number(sup.balance !== undefined ? sup.balance : 0),
+    purchaseHistoryCount: Number(sup.purchase_history_count !== undefined ? sup.purchase_history_count : sup.purchaseHistoryCount || 0)
+  };
+}
+
 // PUT /api/suppliers/:id
 export async function PUT(request: Request, { params }: Params) {
   try {
@@ -16,7 +32,6 @@ export async function PUT(request: Request, { params }: Params) {
     if (body.companyName) updates.company_name = body.companyName;
     if (body.name) {
       updates.company_name = body.name;
-      updates.name = body.name;
     }
     if (body.email !== undefined) updates.email = body.email;
     if (body.phone !== undefined) updates.phone = body.phone;
@@ -36,7 +51,7 @@ export async function PUT(request: Request, { params }: Params) {
 
     return NextResponse.json({
       message: "Supplier updated successfully",
-      supplier: updatedSupplier
+      supplier: formatSupplier(updatedSupplier)
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -64,3 +79,4 @@ export async function DELETE(request: Request, { params }: Params) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

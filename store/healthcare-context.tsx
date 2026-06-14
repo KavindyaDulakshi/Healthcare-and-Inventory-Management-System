@@ -61,7 +61,7 @@ interface HealthcareContextProps {
   markAllNotificationsRead: () => void;
   
   // Auth & Theme
-  loginUser: (email: string, name: string) => void;
+  loginUser: (email: string, name: string, role?: string, id?: string) => void;
   logoutUser: () => void;
   toggleTheme: () => void;
 }
@@ -94,7 +94,15 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
         const profileRes = await fetch("/api/auth/profile");
         if (profileRes.ok) {
           const profileData = await profileRes.json();
-          setCurrentUser(profileData.user);
+          const pUser = profileData.user;
+          setCurrentUser({
+            id: pUser.id,
+            name: pUser.name,
+            email: pUser.email,
+            role: pUser.role,
+            avatar: pUser.name ? pUser.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) : "US",
+            clinicName: "MediCare Hospital Suite"
+          });
           
           const [
             medsRes, 
@@ -749,12 +757,12 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const loginUser = (email: string, name: string) => {
+  const loginUser = (email: string, name: string, role: string = "Admin", id?: string) => {
     const newUser: User = {
-      id: `u-${Date.now()}`,
+      id: id || `u-${Date.now()}`,
       name,
       email,
-      role: "Admin",
+      role,
       avatar: name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2),
       clinicName: "MediCare Hospital Suite"
     };
@@ -776,12 +784,12 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
     if (currentUser) {
       addAuditLog("User Logout", "Auth", `User ${currentUser.name} logged out.`);
     }
-    setCurrentUser(null);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch (e) {
       console.error(e);
     }
+    setCurrentUser(null);
   };
 
   return (

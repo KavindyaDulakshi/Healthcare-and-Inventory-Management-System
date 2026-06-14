@@ -72,7 +72,7 @@ export default function SuppliersPage() {
 
   // Get medicines associated with the selected supplier
   const supplierMedicines = medicines.filter(
-    (m) => m.supplier.toLowerCase() === selectedSupplier?.name.toLowerCase()
+    (m) => m.supplier && selectedSupplier?.name && m.supplier.toLowerCase() === selectedSupplier.name.toLowerCase()
   );
 
   return (
@@ -160,11 +160,11 @@ export default function SuppliersPage() {
               >
                 <div className="flex items-center gap-3">
                   <div className="bg-muted text-foreground p-2 rounded-lg font-bold text-xs uppercase shrink-0">
-                    {s.name.split(" ").map((n) => n[0]).join("")}
+                    {(s.name || "Unknown").split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold leading-tight">{s.name}</span>
-                    <span className="text-[10px] text-muted-foreground mt-1">Orders: {s.purchaseHistoryCount}</span>
+                    <span className="text-xs font-bold leading-tight">{s.name || "Unknown"}</span>
+                    <span className="text-[10px] text-muted-foreground mt-1">Orders: {s.purchaseHistoryCount || 0}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -189,18 +189,18 @@ export default function SuppliersPage() {
                       <Truck className="h-7 w-7" />
                     </div>
                     <div className="flex flex-col text-left">
-                      <CardTitle className="text-xl font-bold">{selectedSupplier.name}</CardTitle>
+                      <CardTitle className="text-xl font-bold">{selectedSupplier.name || "Unknown Supplier"}</CardTitle>
                       <CardDescription className="flex items-center gap-1">
-                        Contact Key: <span className="font-semibold text-foreground/80">{selectedSupplier.contactPerson}</span>
+                        Contact Key: <span className="font-semibold text-foreground/80">{selectedSupplier.contactPerson || "N/A"}</span>
                       </CardDescription>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="rounded-lg">
-                      Rating: {selectedSupplier.rating} / 5.0
+                      Rating: {selectedSupplier.rating ?? 5} / 5.0
                     </Badge>
-                    <Badge variant={selectedSupplier.balance > 0 ? "warning" : "secondary"}>
-                      {selectedSupplier.balance > 0 ? "PAST DUE" : "SETTLED"}
+                    <Badge variant={(selectedSupplier.balance || 0) > 0 ? "warning" : "secondary"}>
+                      {(selectedSupplier.balance || 0) > 0 ? "PAST DUE" : "SETTLED"}
                     </Badge>
                   </div>
                 </div>
@@ -213,8 +213,8 @@ export default function SuppliersPage() {
                     <Mail className="h-4 w-4 text-primary shrink-0" />
                     <div className="flex flex-col truncate">
                       <span className="text-muted-foreground font-semibold">Email</span>
-                      <a href={`mailto:${selectedSupplier.email}`} className="truncate hover:underline text-foreground">
-                        {selectedSupplier.email}
+                      <a href={`mailto:${selectedSupplier.email || ""}`} className="truncate hover:underline text-foreground">
+                        {selectedSupplier.email || "No Email"}
                       </a>
                     </div>
                   </div>
@@ -222,8 +222,8 @@ export default function SuppliersPage() {
                     <Phone className="h-4 w-4 text-primary shrink-0" />
                     <div className="flex flex-col">
                       <span className="text-muted-foreground font-semibold">Phone</span>
-                      <a href={`tel:${selectedSupplier.phone}`} className="hover:underline text-foreground">
-                        {selectedSupplier.phone}
+                      <a href={`tel:${selectedSupplier.phone || ""}`} className="hover:underline text-foreground">
+                        {selectedSupplier.phone || "No Phone"}
                       </a>
                     </div>
                   </div>
@@ -231,7 +231,7 @@ export default function SuppliersPage() {
                     <MapPin className="h-4 w-4 text-primary shrink-0" />
                     <div className="flex flex-col truncate">
                       <span className="text-muted-foreground font-semibold">Address</span>
-                      <span className="truncate text-foreground">{selectedSupplier.address}</span>
+                      <span className="truncate text-foreground">{selectedSupplier.address || "No Address"}</span>
                     </div>
                   </div>
                 </div>

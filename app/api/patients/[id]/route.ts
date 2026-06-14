@@ -5,6 +5,55 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
+function formatPatient(p: any) {
+  if (!p) return null;
+  let gender = "Other";
+  let bloodGroup = "O+";
+  let medicalHistory: any[] = [];
+
+  try {
+    if (p.medical_notes) {
+      const parsed = JSON.parse(p.medical_notes);
+      if (parsed && typeof parsed === "object") {
+        if (Array.isArray(parsed)) {
+          medicalHistory = parsed;
+        } else {
+          gender = parsed.gender || "Other";
+          bloodGroup = parsed.bloodGroup || "O+";
+          medicalHistory = parsed.medicalHistory || [];
+        }
+      }
+    }
+  } catch (e) {}
+
+  let age = 35;
+  if (p.dob) {
+    const birthDate = new Date(p.dob);
+    const today = new Date();
+    age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+  }
+
+  return {
+    id: p.id,
+    first_name: p.first_name,
+    last_name: p.last_name,
+    name: `${p.first_name} ${p.last_name}`.trim(),
+    email: p.email,
+    phone: p.phone,
+    dob: p.dob,
+    address: p.address,
+    age,
+    gender,
+    bloodGroup,
+    medicalHistory,
+    created_at: p.created_at
+  };
+}
+
 // GET /api/patients/:id
 export async function GET(request: Request, { params }: Params) {
   try {
@@ -14,18 +63,7 @@ export async function GET(request: Request, { params }: Params) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
     
-    let medicalHistory = [];
-    try {
-      if (patient.medical_notes) {
-        medicalHistory = JSON.parse(patient.medical_notes);
-      }
-    } catch (e) {}
-
-    return NextResponse.json({
-      ...patient,
-      name: patient.name || `${patient.first_name} ${patient.last_name}`.trim(),
-      medicalHistory
-    });
+    return NextResponse.json(formatPatient(patient));
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -42,11 +80,31 @@ export async function PUT(request: Request, { params }: Params) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
+    // Parse existing notes to keep unmodified packed fields
+    let parsedNotes: any = {};
+    try {
+      if (existingPatient.medical_notes) {
+        parsedNotes = JSON.parse(existingPatient.medical_notes);
+      }
+    } catch (e) {}
+
+    let gender = parsedNotes.gender || "Male";
+    let bloodGroup = parsedNotes.bloodGroup || "O+";
+    let medicalHistory = parsedNotes.medicalHistory || [];
+    if (Array.isArray(parsedNotes)) {
+      medicalHistory = parsedNotes;
+    }
+
+    // Check updates
+    if (body.gender !== undefined) gender = body.gender;
+    if (body.bloodGroup !== undefined) bloodGroup = body.bloodGroup;
+    if (body.blood_group !== undefined) bloodGroup = body.blood_group;
+    if (body.medicalHistory !== undefined) medicalHistory = body.medicalHistory;
+
     const updates: any = {};
     if (body.first_name !== undefined) updates.first_name = body.first_name;
     if (body.last_name !== undefined) updates.last_name = body.last_name;
     if (body.name !== undefined) {
-      updates.name = body.name;
       const names = body.name.split(" ");
       updates.first_name = names[0];
       updates.last_name = names.slice(1).join(" ") || "";
@@ -55,18 +113,13 @@ export async function PUT(request: Request, { params }: Params) {
     if (body.phone !== undefined) updates.phone = body.phone;
     if (body.dob !== undefined) updates.dob = body.dob;
     if (body.address !== undefined) updates.address = body.address;
-    
-    // Support medicalHistory array update
-    if (body.medicalHistory !== undefined) {
-      updates.medical_notes = JSON.stringify(body.medicalHistory);
-    } else if (body.medical_notes !== undefined) {
-      updates.medical_notes = body.medical_notes;
-    }
-    
-    if (body.age !== undefined) updates.age = Number(body.age);
-    if (body.gender !== undefined) updates.gender = body.gender;
-    if (body.bloodGroup !== undefined) updates.bloodGroup = body.bloodGroup;
-    if (body.blood_group !== undefined) updates.bloodGroup = body.blood_group;
+
+    // Pack updated notes
+    updates.medical_notes = JSON.stringify({
+      gender,
+      bloodGroup,
+      medicalHistory
+    });
 
     const updatedPatient = await dbService.updatePatient(id, updates);
 
@@ -79,7 +132,7 @@ export async function PUT(request: Request, { params }: Params) {
 
     return NextResponse.json({
       message: "Patient updated successfully",
-      patient: updatedPatient
+      patient: formatPatient(updatedPatient)
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

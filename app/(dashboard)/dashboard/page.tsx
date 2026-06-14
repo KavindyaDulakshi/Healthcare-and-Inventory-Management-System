@@ -11,11 +11,11 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell
 } from "recharts";
+import { SafeResponsiveContainer } from "@/components/ui/chart-container";
 import {
   Pill,
   AlertTriangle,
@@ -53,10 +53,12 @@ export default function DashboardPage() {
     stockTransactions,
     dispenseMedicine,
     updateMedicine,
-    addAppointment
+    addAppointment,
+    currentUser
   } = useHealthcare();
 
   const [mounted, setMounted] = useState(false);
+  const [isChartReady, setIsChartReady] = useState(false);
   
   // Dispense Form States
   const [isDispenseOpen, setIsDispenseOpen] = useState(false);
@@ -82,6 +84,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true);
+    const timer = setTimeout(() => {
+      setIsChartReady(true);
+    }, 150);
+    return () => clearTimeout(timer);
   }, []);
 
   // Stats Calculations
@@ -201,9 +207,14 @@ export default function DashboardPage() {
       
       {/* Welcome header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Welcome back, Dr. Sarah 👋</h1>
-          <p className="text-sm text-muted-foreground mt-1">Here is a clinical analytics digest for your facility today.</p>
+        <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-tr from-primary to-blue-500 text-white font-bold h-12 w-12 rounded-2xl flex items-center justify-center text-base shadow-md shrink-0 select-none">
+            {currentUser?.avatar || "US"}
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight">Welcome back, {currentUser?.name || "Dr. Sarah"} 👋</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Here is a clinical analytics digest for your facility today.</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="rounded-xl gap-2 text-xs" onClick={() => router.push("/reports")}>
@@ -319,10 +330,10 @@ export default function DashboardPage() {
             </div>
             <Badge variant="secondary" className="rounded-lg">H1 2026</Badge>
           </CardHeader>
-          <CardContent className="h-80 pt-4">
-            {mounted ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <CardContent className="h-80 pt-4 min-w-0">
+            <SafeResponsiveContainer>
+              {(width, height) => (
+                <AreaChart width={width} height={height} data={revenueHistory} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2563EB" stopOpacity={0.2}/>
@@ -342,10 +353,8 @@ export default function DashboardPage() {
                   />
                   <Area type="monotone" dataKey="revenue" stroke="#2563EB" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" />
                 </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">Loading chart...</div>
-            )}
+              )}
+            </SafeResponsiveContainer>
           </CardContent>
         </Card>
 
@@ -356,10 +365,10 @@ export default function DashboardPage() {
             <CardDescription>Stock distribution by type</CardDescription>
           </CardHeader>
           <CardContent className="h-80 flex flex-col justify-between pt-4">
-            {mounted ? (
-              <div className="h-48 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+            <div className="h-48 w-full min-w-0">
+              <SafeResponsiveContainer>
+                {(width, height) => (
+                  <PieChart width={width} height={height}>
                     <Pie
                       data={categoryData}
                       cx="50%"
@@ -383,16 +392,14 @@ export default function DashboardPage() {
                       }}
                     />
                   </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="h-48 w-full flex items-center justify-center text-xs text-muted-foreground">Loading split...</div>
-            )}
+                )}
+              </SafeResponsiveContainer>
+            </div>
             
             {/* Custom Pie Legend */}
             <div className="grid grid-cols-2 gap-2 text-xs pt-4 border-t border-border/40">
               {categoryData.slice(0, 4).map((entry, idx) => (
-                <div key={entry.name} className="flex items-center gap-1.5">
+                <div key={`${entry.name}-${idx}`} className="flex items-center gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                   <span className="truncate font-semibold text-foreground/80">{entry.name}</span>
                 </div>

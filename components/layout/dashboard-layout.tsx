@@ -44,21 +44,45 @@ interface MenuItem {
   icon: React.ComponentType<any>;
 }
 
-const SIDEBAR_ITEMS: MenuItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Inventory", href: "/inventory", icon: Package },
-  { name: "Medicines", href: "/medicines", icon: Pill },
-  { name: "Categories", href: "/categories", icon: Tags },
-  { name: "Suppliers", href: "/suppliers", icon: Truck },
-  { name: "Patients", href: "/patients", icon: Users },
-  { name: "Doctors", href: "/doctors", icon: Stethoscope },
-  { name: "Appointments", href: "/appointments", icon: Calendar },
-  { name: "Billing", href: "/billing", icon: CreditCard },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "AI Assistant", href: "/ai-assistant", icon: Brain },
-  { name: "Notifications", href: "/notifications", icon: Bell },
-  { name: "Audit Logs", href: "/audit-logs", icon: History },
-  { name: "Settings", href: "/settings", icon: Settings }
+interface MenuSection {
+  title: string;
+  items: MenuItem[];
+}
+
+const SIDEBAR_SECTIONS: MenuSection[] = [
+  {
+    title: "Core Operations",
+    items: [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "AI Assistant", href: "/ai-assistant", icon: Brain }
+    ]
+  },
+  {
+    title: "Clinical Operations",
+    items: [
+      { name: "Patients", href: "/patients", icon: Users },
+      { name: "Doctors", href: "/doctors", icon: Stethoscope },
+      { name: "Appointments", href: "/appointments", icon: Calendar },
+      { name: "Billing", href: "/billing", icon: CreditCard }
+    ]
+  },
+  {
+    title: "Inventory & Logistics",
+    items: [
+      { name: "Inventory", href: "/inventory", icon: Package },
+      { name: "Medicines", href: "/medicines", icon: Pill },
+      { name: "Categories", href: "/categories", icon: Tags },
+      { name: "Suppliers", href: "/suppliers", icon: Truck }
+    ]
+  },
+  {
+    title: "System & Audit",
+    items: [
+      { name: "Notifications", href: "/notifications", icon: Bell },
+      { name: "Audit Logs", href: "/audit-logs", icon: History },
+      { name: "Settings", href: "/settings", icon: Settings }
+    ]
+  }
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -76,6 +100,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     patients,
     doctors
   } = useHealthcare();
+
+
+  const getBadge = (name: string) => {
+    if (name === "Notifications") {
+      const count = notifications.filter((n) => !n.read).length;
+      return count > 0 ? count : undefined;
+    }
+    if (name === "Inventory") {
+      const count = medicines.filter((m) => m.status === "low-stock").length;
+      return count > 0 ? count : undefined;
+    }
+    return undefined;
+  };
+
+  const getBadgeColor = (name: string) => {
+    if (name === "Inventory") return "bg-amber-500 text-white dark:bg-amber-600";
+    return "bg-rose-500 text-white dark:bg-rose-600";
+  };
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -160,13 +202,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Menu className="h-5 w-5" />
           </button>
           
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="bg-primary/10 text-primary p-2 rounded-xl">
-              <HeartPulse className="h-6 w-6" />
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <div className="bg-gradient-to-tr from-primary to-blue-500 text-white p-2 rounded-xl shadow-xs group-hover:scale-105 transition-transform duration-200">
+              <HeartPulse className="h-5.5 w-5.5 animate-pulse" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-base tracking-tight">MediCare</span>
-              <span className="text-[10px] text-muted-foreground leading-none">Clinic Suite</span>
+              <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+                MediCare
+              </span>
+              <span className="text-[10px] font-bold text-primary dark:text-blue-400 tracking-wider uppercase leading-none">
+                Clinic Suite
+              </span>
             </div>
           </Link>
         </div>
@@ -335,42 +381,97 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
         >
           {/* Scrollable Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1.5">
-            {SIDEBAR_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-              
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 group relative select-none",
-                    isActive
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white shadow-md shadow-blue-500/15"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground hover:pl-4"
-                  )}
-                  title={isSidebarCollapsed ? item.name : undefined}
-                >
-                  <Icon className={cn("h-5 w-5 shrink-0 transition-transform duration-300", {
-                    "text-white": isActive,
-                    "text-muted-foreground group-hover:text-foreground": !isActive,
-                    "group-hover:rotate-12 group-hover:scale-110": item.name !== "Settings" && item.name !== "Audit Logs",
-                    "group-hover:rotate-90 group-hover:scale-110": item.name === "Settings",
-                    "group-hover:scale-115 group-hover:-rotate-12": item.name === "Audit Logs"
-                  })} />
-                  {!isSidebarCollapsed && <span>{item.name}</span>}
+          <nav className="flex-1 overflow-y-auto p-3 flex flex-col gap-5">
+            {SIDEBAR_SECTIONS.map((section) => (
+              <div key={section.title} className="flex flex-col gap-1.5">
+                {!isSidebarCollapsed && (
+                  <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider px-3.5 mb-1.5 select-none">
+                    {section.title}
+                  </span>
+                )}
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                  const badge = getBadge(item.name);
                   
-                  {/* Tooltip for collapsed mode */}
-                  {isSidebarCollapsed && (
-                    <span className="absolute left-16 scale-0 rounded bg-foreground p-2 text-xs font-semibold text-background group-hover:scale-100 z-50 transition-all shadow-md">
-                      {item.name}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group relative select-none border border-transparent",
+                        isActive
+                          ? "bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-border/40 dark:from-primary/15 dark:to-primary/5 dark:text-blue-400"
+                          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      )}
+                      title={isSidebarCollapsed ? item.name : undefined}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        {isActive && !isSidebarCollapsed && (
+                          <motion.span
+                            layoutId="active-bar-desktop"
+                            className="absolute left-0 w-1.5 h-5 bg-primary dark:bg-blue-400 rounded-r-full"
+                            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <Icon className={cn("h-4.5 w-4.5 shrink-0 transition-transform duration-200", {
+                          "text-primary dark:text-blue-400": isActive,
+                          "text-muted-foreground group-hover:text-foreground": !isActive,
+                          "group-hover:rotate-6 group-hover:scale-105": item.name !== "Settings" && item.name !== "Audit Logs",
+                          "group-hover:rotate-45 group-hover:scale-105": item.name === "Settings"
+                        })} />
+                        {!isSidebarCollapsed && <span>{item.name}</span>}
+                      </div>
+                      
+                      {!isSidebarCollapsed && badge && (
+                        <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0", getBadgeColor(item.name))}>
+                          {badge}
+                        </span>
+                      )}
+
+                      {/* Tooltip & Dot for collapsed mode */}
+                      {isSidebarCollapsed && (
+                        <>
+                          {badge && (
+                            <span className={cn("absolute top-1.5 right-1.5 h-2 w-2 rounded-full ring-2 ring-card animate-pulse", item.name === "Inventory" ? "bg-amber-500" : "bg-rose-500")} />
+                          )}
+                          <span className="absolute left-16 scale-0 rounded bg-foreground p-2 text-xs font-semibold text-background group-hover:scale-100 z-50 transition-all shadow-md">
+                            {item.name} {badge ? `(${badge})` : ""}
+                          </span>
+                        </>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
+
+          {/* User Profile Card in Sidebar */}
+          <div className="p-3.5 border-t border-border/60 flex flex-col gap-3">
+            <div className={cn("flex items-center gap-3", isSidebarCollapsed ? "justify-center" : "px-1.5")}>
+              <div className="bg-gradient-to-tr from-primary to-blue-500 text-white font-bold h-9 w-9 rounded-xl flex items-center justify-center text-sm shadow-xs shrink-0 select-none">
+                {currentUser.avatar}
+              </div>
+              {!isSidebarCollapsed && (
+                <div className="flex flex-col text-left overflow-hidden">
+                  <span className="text-xs font-bold leading-tight truncate">{currentUser.name}</span>
+                  <span className="text-[10px] text-muted-foreground truncate">{currentUser.role.split(" / ")[0]}</span>
+                </div>
+              )}
+            </div>
+            {!isSidebarCollapsed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 rounded-xl text-xs text-danger hover:bg-red-500/10 h-8 px-2.5"
+                onClick={logoutUser}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Log out</span>
+              </Button>
+            )}
+          </div>
 
           {/* Toggle Sidebar Collapse Button */}
           <div className="p-4 border-t border-border flex justify-end">
@@ -405,9 +506,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="glass-panel fixed top-0 bottom-0 left-0 w-72 bg-card/90 dark:bg-card/85 z-50 p-6 flex flex-col gap-6 shadow-2xl md:hidden border-r border-border"
               >
                 <div className="flex items-center justify-between border-b border-border pb-4">
-                  <div className="flex items-center gap-2">
-                    <HeartPulse className="h-6 w-6 text-primary animate-pulse" />
-                    <span className="font-bold text-lg tracking-tight">MediCare Menu</span>
+                  <div className="flex items-center gap-2.5">
+                    <div className="bg-gradient-to-tr from-primary to-blue-500 text-white p-1.5 rounded-lg">
+                      <HeartPulse className="h-5 w-5 animate-pulse" />
+                    </div>
+                    <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/85">
+                      MediCare
+                    </span>
                   </div>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -429,27 +534,55 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   />
                 </div>
 
-                <nav className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-2">
-                  {SIDEBAR_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 group",
-                          isActive
-                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white shadow-md shadow-blue-500/15"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground hover:pl-4"
-                        )}
-                      >
-                        <Icon className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110" />
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
+                <nav className="flex-1 overflow-y-auto flex flex-col gap-5 pr-2">
+                  {SIDEBAR_SECTIONS.map((section) => (
+                    <div key={section.title} className="flex flex-col gap-1.5">
+                      <span className="text-[10px] font-semibold text-muted-foreground/50 uppercase tracking-wider px-3.5 mb-1.5 select-none">
+                        {section.title}
+                      </span>
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                        const badge = getBadge(item.name);
+                        
+                        return (
+                          <Link
+                            key={item.name}
+                            href={item.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={cn(
+                              "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-200 group relative select-none border border-transparent",
+                              isActive
+                                ? "bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-border/40 dark:from-primary/15 dark:to-primary/5 dark:text-blue-400"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            )}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              {isActive && (
+                                <motion.span
+                                  layoutId="active-bar-mobile"
+                                  className="absolute left-0 w-1.5 h-5 bg-primary dark:bg-blue-400 rounded-r-full"
+                                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                                />
+                              )}
+                              <Icon className={cn("h-4.5 w-4.5 shrink-0 transition-transform duration-300", {
+                                "text-primary dark:text-blue-400": isActive,
+                                "text-muted-foreground group-hover:text-foreground": !isActive,
+                                "group-hover:scale-110": true
+                              })} />
+                              <span>{item.name}</span>
+                            </div>
+                            
+                            {badge && (
+                              <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0", getBadgeColor(item.name))}>
+                                {badge}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </nav>
 
                 <div className="border-t border-border pt-4 flex flex-col gap-3">
@@ -525,7 +658,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span>&copy; 2026 Medicare Inc. All rights reserved. Hospital Suite Dashboard.</span>
             <div className="flex items-center gap-4">
               <Link href="/settings" className="hover:underline font-medium">Settings</Link>
-              <Link href="/ai" className="hover:underline font-medium">AI Support</Link>
+              <Link href="/ai-assistant" className="hover:underline font-medium">AI Support</Link>
               <a href="#" className="hover:underline font-medium">Terms of Use</a>
             </div>
           </footer>

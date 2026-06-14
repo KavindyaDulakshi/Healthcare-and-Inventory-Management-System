@@ -386,6 +386,15 @@ export const dbService = {
     return db.doctors;
   },
 
+  async getDoctorById(id: string) {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase.from("doctors").select("*").eq("id", id).single();
+      if (error) return null;
+      return data;
+    }
+    return db.doctors.find(d => d.id === id) || null;
+  },
+
   async createDoctor(doc: any) {
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.from("doctors").insert([doc]).select().single();
