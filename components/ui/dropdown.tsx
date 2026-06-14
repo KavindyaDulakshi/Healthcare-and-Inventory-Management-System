@@ -35,12 +35,12 @@ export function Dropdown({ trigger, children, align = "right", className }: Drop
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 5 }}
+            initial={{ opacity: 0, scale: 0.92, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 5 }}
-            transition={{ duration: 0.15 }}
+            exit={{ opacity: 0, scale: 0.92, y: 8 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className={cn(
-              "absolute z-40 mt-2 w-56 rounded-xl border border-border bg-card p-1 shadow-lg focus:outline-hidden",
+              "glass-panel absolute z-40 mt-2 w-56 rounded-xl bg-card/90 dark:bg-card/85 p-1.5 shadow-2xl focus:outline-hidden",
               {
                 "left-0 origin-top-left": align === "left",
                 "right-0 origin-top-right": align === "right"
@@ -66,7 +66,7 @@ export function DropdownItem({ children, className, ...props }: DropdownItemProp
   return (
     <button
       className={cn(
-        "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-foreground hover:bg-muted/80 hover:text-foreground/90 transition-all duration-150 cursor-pointer disabled:pointer-events-none disabled:opacity-50",
+        "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-bold text-foreground/80 hover:bg-primary/5 hover:text-primary hover:pl-4 transition-all duration-200 cursor-pointer disabled:pointer-events-none disabled:opacity-50 select-none",
         className
       )}
       {...props}

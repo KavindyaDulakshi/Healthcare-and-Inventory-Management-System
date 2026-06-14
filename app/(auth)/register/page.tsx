@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
-import { HeartPulse, User, Mail, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { HeartPulse, User, Mail, Lock, ShieldCheck, Sparkles, ShieldAlert } from "lucide-react";
 import { useHealthcare } from "@/store/healthcare-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { loginUser } = useHealthcare();
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const {
     register,
@@ -40,15 +41,31 @@ export default function RegisterPage() {
   });
 
   const onSubmit = async (data: RegisterFields) => {
+    setErrorMsg("");
     try {
-      // Mock onboarding success
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          role: "Admin"
+        })
+      });
+      
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(body.error || "Registration failed");
+      }
+      
       setSuccess(true);
       setTimeout(() => {
-        loginUser(data.email, data.name);
+        loginUser(body.user.email, body.user.name, body.user.role, body.user.id);
         router.push("/dashboard");
       }, 1500);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setErrorMsg(err.message || "An error occurred during registration.");
     }
   };
 
@@ -154,6 +171,12 @@ export default function RegisterPage() {
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+              {errorMsg && (
+                <div className="bg-danger/10 border border-danger/25 text-danger rounded-xl p-3 flex items-start gap-2 text-xs font-semibold leading-relaxed">
+                  <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
               <div className="relative">
                 <User className="absolute left-3 top-9.5 h-4.5 w-4.5 text-muted-foreground z-10" />
                 <Input

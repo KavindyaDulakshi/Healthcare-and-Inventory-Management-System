@@ -46,19 +46,21 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFields) => {
     setErrorMsg("");
     try {
-      // Mock login validation
-      if (data.email === "sarah.chen@medicare.com" && data.password === "password123") {
-        loginUser(data.email, "Dr. Sarah Chen");
-        router.push("/dashboard");
-      } else {
-        // Register any other mock users too!
-        const username = data.email.split("@")[0];
-        const displayName = username.charAt(0).toUpperCase() + username.slice(1);
-        loginUser(data.email, displayName + " Staff");
-        router.push("/dashboard");
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      
+      const body = await res.json();
+      if (!res.ok) {
+        throw new Error(body.error || "Invalid credentials");
       }
-    } catch (err) {
-      setErrorMsg("Invalid credentials. Try email 'sarah.chen@medicare.com' and password 'password123'.");
+      
+      loginUser(body.user.email, body.user.name, body.user.role, body.user.id);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Invalid credentials. Try email 'sarah.chen@medicare.com' and password 'password123'.");
     }
   };
 
