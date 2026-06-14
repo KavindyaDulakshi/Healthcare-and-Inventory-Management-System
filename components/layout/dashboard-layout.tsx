@@ -33,7 +33,9 @@ import {
   Home,
   CheckCircle,
   AlertTriangle,
-  X
+  X,
+  Tags,
+  Package
 } from "lucide-react";
 
 interface MenuItem {
@@ -44,14 +46,16 @@ interface MenuItem {
 
 const SIDEBAR_ITEMS: MenuItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Inventory", href: "/inventory", icon: Pill },
+  { name: "Inventory", href: "/inventory", icon: Package },
+  { name: "Medicines", href: "/medicines", icon: Pill },
+  { name: "Categories", href: "/categories", icon: Tags },
   { name: "Suppliers", href: "/suppliers", icon: Truck },
   { name: "Patients", href: "/patients", icon: Users },
   { name: "Doctors", href: "/doctors", icon: Stethoscope },
   { name: "Appointments", href: "/appointments", icon: Calendar },
   { name: "Billing", href: "/billing", icon: CreditCard },
   { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "AI Assistant", href: "/ai", icon: Brain },
+  { name: "AI Assistant", href: "/ai-assistant", icon: Brain },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Audit Logs", href: "/audit-logs", icon: History },
   { name: "Settings", href: "/settings", icon: Settings }

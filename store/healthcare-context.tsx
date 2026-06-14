@@ -85,35 +85,85 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // Load state from local storage on mount
+  // Load state from API with local storage fallback on mount
   useEffect(() => {
     setIsMounted(true);
     
-    const localMedicines = localStorage.getItem("hc_medicines");
-    const localCategories = localStorage.getItem("hc_categories");
-    const localTransactions = localStorage.getItem("hc_transactions");
-    const localSuppliers = localStorage.getItem("hc_suppliers");
-    const localPatients = localStorage.getItem("hc_patients");
-    const localDoctors = localStorage.getItem("hc_doctors");
-    const localAppointments = localStorage.getItem("hc_appointments");
-    const localBilling = localStorage.getItem("hc_billing");
-    const localAuditLogs = localStorage.getItem("hc_audit_logs");
-    const localNotifications = localStorage.getItem("hc_notifications");
-    const localUser = localStorage.getItem("hc_user");
-    const localTheme = localStorage.getItem("hc_theme") as "light" | "dark" | null;
+    async function loadData() {
+      try {
+        const profileRes = await fetch("/api/auth/profile");
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          setCurrentUser(profileData.user);
+          
+          const [
+            medsRes, 
+            catsRes, 
+            supsRes, 
+            patsRes, 
+            docsRes, 
+            appsRes, 
+            billsRes, 
+            notifsRes, 
+            logsRes
+          ] = await Promise.all([
+            fetch("/api/medicines"),
+            fetch("/api/categories"),
+            fetch("/api/suppliers"),
+            fetch("/api/patients"),
+            fetch("/api/doctors"),
+            fetch("/api/appointments"),
+            fetch("/api/billing"),
+            fetch("/api/notifications"),
+            fetch("/api/audit-logs")
+          ]);
 
-    setMedicines(localMedicines ? JSON.parse(localMedicines) : INITIAL_MEDICINES);
-    setCategories(localCategories ? JSON.parse(localCategories) : INITIAL_CATEGORIES);
-    setStockTransactions(localTransactions ? JSON.parse(localTransactions) : INITIAL_STOCK_TRANSACTIONS);
-    setSuppliers(localSuppliers ? JSON.parse(localSuppliers) : INITIAL_SUPPLIERS);
-    setPatients(localPatients ? JSON.parse(localPatients) : INITIAL_PATIENTS);
-    setDoctors(localDoctors ? JSON.parse(localDoctors) : INITIAL_DOCTORS);
-    setAppointments(localAppointments ? JSON.parse(localAppointments) : INITIAL_APPOINTMENTS);
-    setBilling(localBilling ? JSON.parse(localBilling) : INITIAL_INVOICES);
-    setAuditLogs(localAuditLogs ? JSON.parse(localAuditLogs) : INITIAL_AUDIT_LOGS);
-    setNotifications(localNotifications ? JSON.parse(localNotifications) : INITIAL_NOTIFICATIONS);
-    setCurrentUser(localUser ? JSON.parse(localUser) : INITIAL_USER);
+          if (medsRes.ok) setMedicines(await medsRes.json());
+          if (catsRes.ok) setCategories(await catsRes.json());
+          if (supsRes.ok) setSuppliers(await supsRes.json());
+          if (patsRes.ok) setPatients(await patsRes.json());
+          if (docsRes.ok) setDoctors(await docsRes.json());
+          if (appsRes.ok) setAppointments(await appsRes.json());
+          if (billsRes.ok) setBilling(await billsRes.json());
+          if (notifsRes.ok) setNotifications(await notifsRes.json());
+          if (logsRes.ok) setAuditLogs(await logsRes.json());
+          
+          return;
+        }
+      } catch (err) {
+        console.error("Failed to load from API, falling back to local storage:", err);
+      }
+
+      // Fallback
+      const localMedicines = localStorage.getItem("hc_medicines");
+      const localCategories = localStorage.getItem("hc_categories");
+      const localTransactions = localStorage.getItem("hc_transactions");
+      const localSuppliers = localStorage.getItem("hc_suppliers");
+      const localPatients = localStorage.getItem("hc_patients");
+      const localDoctors = localStorage.getItem("hc_doctors");
+      const localAppointments = localStorage.getItem("hc_appointments");
+      const localBilling = localStorage.getItem("hc_billing");
+      const localAuditLogs = localStorage.getItem("hc_audit_logs");
+      const localNotifications = localStorage.getItem("hc_notifications");
+      const localUser = localStorage.getItem("hc_user");
+      const localTheme = localStorage.getItem("hc_theme") as "light" | "dark" | null;
+
+      setMedicines(localMedicines ? JSON.parse(localMedicines) : INITIAL_MEDICINES);
+      setCategories(localCategories ? JSON.parse(localCategories) : INITIAL_CATEGORIES);
+      setStockTransactions(localTransactions ? JSON.parse(localTransactions) : INITIAL_STOCK_TRANSACTIONS);
+      setSuppliers(localSuppliers ? JSON.parse(localSuppliers) : INITIAL_SUPPLIERS);
+      setPatients(localPatients ? JSON.parse(localPatients) : INITIAL_PATIENTS);
+      setDoctors(localDoctors ? JSON.parse(localDoctors) : INITIAL_DOCTORS);
+      setAppointments(localAppointments ? JSON.parse(localAppointments) : INITIAL_APPOINTMENTS);
+      setBilling(localBilling ? JSON.parse(localBilling) : INITIAL_INVOICES);
+      setAuditLogs(localAuditLogs ? JSON.parse(localAuditLogs) : INITIAL_AUDIT_LOGS);
+      setNotifications(localNotifications ? JSON.parse(localNotifications) : INITIAL_NOTIFICATIONS);
+      setCurrentUser(localUser ? JSON.parse(localUser) : INITIAL_USER);
+    }
     
+    loadData();
+    
+    const localTheme = localStorage.getItem("hc_theme") as "light" | "dark" | null;
     const initialTheme = localTheme || "light";
     setTheme(initialTheme);
     if (initialTheme === "dark") {
@@ -217,11 +267,12 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
     setAuditLogs((prev) => [newLog, ...prev]);
   };
 
-  const addMedicine = (med: Omit<Medicine, "id" | "status">) => {
+  const addMedicine = async (med: Omit<Medicine, "id" | "status">) => {
     const status = calculateMedicineStatus(med.quantity, med.expiryDate);
+    const tempId = `med-${Date.now()}`;
     const newMed: Medicine = {
       ...med,
-      id: `med-${Date.now()}`,
+      id: tempId,
       status
     };
     setMedicines((prev) => [...prev, newMed]);
@@ -258,9 +309,23 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
       };
       setNotifications((prev) => [newNotif, ...prev]);
     }
+
+    try {
+      const res = await fetch("/api/medicines", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(med)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setMedicines((prev) => prev.map(m => m.id === tempId ? { ...m, id: saved.medicine.id } : m));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const updateMedicine = (id: string, updatedFields: Partial<Medicine>) => {
+  const updateMedicine = async (id: string, updatedFields: Partial<Medicine>) => {
     setMedicines((prev) =>
       prev.map((med) => {
         if (med.id === id) {
@@ -274,9 +339,19 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
     
     const medName = medicines.find((m) => m.id === id)?.name || "Unknown";
     addAuditLog("Update Medicine", "Inventory", `Updated fields for ${medName}.`);
+
+    try {
+      await fetch(`/api/medicines/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedFields)
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const deleteMedicine = (id: string) => {
+  const deleteMedicine = async (id: string) => {
     const med = medicines.find((m) => m.id === id);
     if (!med) return;
     
@@ -288,6 +363,14 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
     );
 
     addAuditLog("Delete Medicine", "Inventory", `Deleted medicine ${med.name}.`);
+
+    try {
+      await fetch(`/api/medicines/${id}`, {
+        method: "DELETE"
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const dispenseMedicine = (medicineId: string, quantity: number, patientId: string, doctorId: string, notes: string): boolean => {
@@ -358,76 +441,173 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
             p.id === patientId ? { ...p, medicalHistory: [historyEntry, ...p.medicalHistory] } : p
           )
         );
+        
+        // Sync history update to API in background
+        if (patient) {
+          const updatedHistory = [historyEntry, ...patient.medicalHistory];
+          fetch(`/api/patients/${patientId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ medicalHistory: updatedHistory })
+          }).catch(console.error);
+        }
       }
 
       addAuditLog("Dispense Medicine", "Clinical", `Dispensed ${quantity} units of ${med?.name} to patient ${patient?.name}.`);
+
+      // Decrease stock in DB via API
+      if (med) {
+        const nextQty = med.quantity - quantity;
+        fetch(`/api/medicines/${medicineId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quantity: nextQty })
+        }).catch(console.error);
+      }
     }
 
     return success;
   };
 
-  const addCategory = (cat: Omit<Category, "id" | "count">) => {
+  const addCategory = async (cat: Omit<Category, "id" | "count">) => {
+    const tempId = `cat-${Date.now()}`;
     const newCat: Category = {
       ...cat,
-      id: `cat-${Date.now()}`,
+      id: tempId,
       count: 0
     };
     setCategories((prev) => [...prev, newCat]);
     addAuditLog("Add Category", "Inventory", `Added new category ${cat.name}.`);
+
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cat)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setCategories((prev) => prev.map(c => c.id === tempId ? { ...c, id: String(saved.category.id) } : c));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const addSupplier = (sup: Omit<Supplier, "id" | "purchaseHistoryCount" | "balance">) => {
+  const addSupplier = async (sup: Omit<Supplier, "id" | "purchaseHistoryCount" | "balance">) => {
+    const tempId = `sup-${Date.now()}`;
     const newSup: Supplier = {
       ...sup,
-      id: `sup-${Date.now()}`,
+      id: tempId,
       purchaseHistoryCount: 0,
       balance: 0
     };
     setSuppliers((prev) => [...prev, newSup]);
     addAuditLog("Add Supplier", "Suppliers", `Added supplier ${sup.name}.`);
+
+    try {
+      const res = await fetch("/api/suppliers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sup)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setSuppliers((prev) => prev.map(s => s.id === tempId ? { ...s, id: saved.supplier.id } : s));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const addPatient = (pat: Omit<Patient, "id" | "medicalHistory">) => {
+  const addPatient = async (pat: Omit<Patient, "id" | "medicalHistory">) => {
+    const tempId = `pat-${Date.now()}`;
     const newPat: Patient = {
       ...pat,
-      id: `pat-${Date.now()}`,
+      id: tempId,
       medicalHistory: []
     };
     setPatients((prev) => [...prev, newPat]);
     addAuditLog("Add Patient", "Patients", `Registered new patient ${pat.name}.`);
+
+    try {
+      const res = await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pat)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setPatients((prev) => prev.map(p => p.id === tempId ? { ...p, id: saved.patient.id } : p));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const addMedicalHistory = (patientId: string, entry: Omit<Patient["medicalHistory"][0], "date">) => {
+  const addMedicalHistory = async (patientId: string, entry: Omit<Patient["medicalHistory"][0], "date">) => {
     const newEntry = {
       ...entry,
       date: new Date().toISOString().split("T")[0]
     };
+    
+    let updatedHistory: any[] = [];
     setPatients((prev) =>
-      prev.map((p) =>
-        p.id === patientId ? { ...p, medicalHistory: [newEntry, ...p.medicalHistory] } : p
-      )
+      prev.map((p) => {
+        if (p.id === patientId) {
+          updatedHistory = [newEntry, ...p.medicalHistory];
+          return { ...p, medicalHistory: updatedHistory };
+        }
+        return p;
+      })
     );
     const patName = patients.find((p) => p.id === patientId)?.name || "Unknown";
     addAuditLog("Update Medical History", "Patients", `Added medical diagnosis for patient ${patName}.`);
+
+    try {
+      await fetch(`/api/patients/${patientId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ medicalHistory: updatedHistory })
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const addDoctor = (doc: Omit<Doctor, "id">) => {
+  const addDoctor = async (doc: Omit<Doctor, "id">) => {
+    const tempId = `doc-${Date.now()}`;
     const newDoc: Doctor = {
       ...doc,
-      id: `doc-${Date.now()}`
+      id: tempId
     };
     setDoctors((prev) => [...prev, newDoc]);
     addAuditLog("Add Doctor", "Doctors", `Added Dr. ${doc.name} to the roster.`);
+
+    try {
+      const res = await fetch("/api/doctors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(doc)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setDoctors((prev) => prev.map(d => d.id === tempId ? { ...d, id: saved.doctor.id } : d));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const addAppointment = (app: Omit<Appointment, "id" | "status">) => {
+  const addAppointment = async (app: Omit<Appointment, "id" | "status">) => {
     const patient = patients.find((p) => p.id === app.patientId);
     const doctor = doctors.find((d) => d.id === app.doctorId);
+    const tempId = `app-${Date.now()}`;
     const newApp: Appointment = {
       ...app,
       patientName: patient?.name || app.patientName,
       doctorName: doctor?.name || app.doctorName,
-      id: `app-${Date.now()}`,
+      id: tempId,
       status: "pending"
     };
     setAppointments((prev) => [newApp, ...prev]);
@@ -444,24 +624,49 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
       date: new Date().toISOString()
     };
     setNotifications((prev) => [newNotif, ...prev]);
+
+    try {
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(app)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setAppointments((prev) => prev.map(a => a.id === tempId ? { ...a, id: saved.appointment.id } : a));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const updateAppointmentStatus = (id: string, status: Appointment["status"]) => {
+  const updateAppointmentStatus = async (id: string, status: Appointment["status"]) => {
     setAppointments((prev) =>
       prev.map((app) => (app.id === id ? { ...app, status } : app))
     );
     const app = appointments.find((a) => a.id === id);
     addAuditLog("Update Appointment Status", "Appointments", `Changed status of appointment for ${app?.patientName} to ${status}.`);
+
+    try {
+      await fetch(`/api/appointments/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const addInvoice = (inv: Omit<Invoice, "id" | "invoiceNumber" | "date" | "status">) => {
+  const addInvoice = async (inv: Omit<Invoice, "id" | "invoiceNumber" | "date" | "status">) => {
     const patient = patients.find((p) => p.id === inv.patientId);
     const count = billing.length + 1;
     const invoiceNumber = `INV-2026-${String(count).padStart(3, "0")}`;
+    const tempId = `inv-${Date.now()}`;
     
     const newInv: Invoice = {
       ...inv,
-      id: `inv-${Date.now()}`,
+      id: tempId,
       invoiceNumber,
       patientName: patient?.name || inv.patientName,
       date: new Date().toISOString().split("T")[0],
@@ -470,24 +675,78 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
 
     setBilling((prev) => [newInv, ...prev]);
     addAuditLog("Generate Invoice", "Billing", `Created invoice ${invoiceNumber} for ${newInv.patientName}.`);
+
+    try {
+      const res = await fetch("/api/billing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientId: inv.patientId,
+          amount: inv.amount,
+          items: inv.items,
+          dueDate: inv.dueDate
+        })
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setBilling((prev) => prev.map(b => b.id === tempId ? { ...b, id: saved.bill.id } : b));
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const updateInvoiceStatus = (id: string, status: Invoice["status"]) => {
+  const updateInvoiceStatus = async (id: string, status: Invoice["status"]) => {
     setBilling((prev) =>
       prev.map((inv) => (inv.id === id ? { ...inv, status } : inv))
     );
     const inv = billing.find((i) => i.id === id);
     addAuditLog("Update Invoice Status", "Billing", `Changed invoice ${inv?.invoiceNumber} to ${status}.`);
+
+    // Invoicing status sync (dummy API model handles PUT updates as well)
+    try {
+      await fetch(`/api/billing`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status })
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const markNotificationRead = (id: string) => {
+  const markNotificationRead = async (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+
+    try {
+      await fetch(`/api/notifications/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ read: true })
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const markAllNotificationsRead = () => {
+  const markAllNotificationsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+
+    // Try marking all read sequentially in background
+    try {
+      const unreads = notifications.filter(n => !n.read);
+      await Promise.all(unreads.map(n => 
+        fetch(`/api/notifications/${n.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ read: true })
+        })
+      ));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const loginUser = (email: string, name: string) => {
@@ -495,7 +754,7 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
       id: `u-${Date.now()}`,
       name,
       email,
-      role: "Clinic Administrator",
+      role: "Admin",
       avatar: name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2),
       clinicName: "MediCare Hospital Suite"
     };
@@ -513,11 +772,16 @@ export function HealthcareProvider({ children }: { children: React.ReactNode }) 
     setAuditLogs((prev) => [newLog, ...prev]);
   };
 
-  const logoutUser = () => {
+  const logoutUser = async () => {
     if (currentUser) {
       addAuditLog("User Logout", "Auth", `User ${currentUser.name} logged out.`);
     }
     setCurrentUser(null);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (

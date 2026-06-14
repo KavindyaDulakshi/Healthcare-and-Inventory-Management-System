@@ -23,7 +23,7 @@ export function Dialog({
   className
 }: DialogProps) {
   // Prevent background scroll when open
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
@@ -88,5 +88,3 @@ export function Dialog({
   );
 }
 
-// Helper hook
-import { useEffect } from "react";
